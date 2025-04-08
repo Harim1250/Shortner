@@ -4,7 +4,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import XIcon from '@mui/icons-material/X';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import PersonIcon from '@mui/icons-material/Person';
-import Header from "@/header";
+import Header from "../Header";
 
 const AppLayout = () => {
   return (

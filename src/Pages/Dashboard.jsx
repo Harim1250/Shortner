@@ -14,7 +14,7 @@ import useFetch from "../Hooks/use-fetch";
 
 import {getUrls} from "../Db/ApiUrls"
 import {getClicksForUrls} from "../Db/apiClicks";
-import {UrlState} from "@/context";
+import {UrlState} from "../Context";
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
