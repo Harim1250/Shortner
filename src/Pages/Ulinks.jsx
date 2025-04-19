@@ -1,52 +1,36 @@
 import DeviceStats from "@/components/device-stats";
 import Location from "@/components/location-stats";
-import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {UrlState} from "../Context";
-import {getClicksForUrl} from "../Db/apiClicks";
-import {deleteUrl, getUrl} from "../Db/ApiUrls";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UrlState } from "../Context";
+import { getClicksForUrl } from "../Db/apiClicks";
+import { deleteUrl, getUrl } from "../Db/ApiUrls";
 import useFetch from "../Hooks/use-fetch";
-import {Copy, Download, LinkIcon, Trash} from "lucide-react";
-import {useEffect} from "react";
-import {useNavigate, useParams} from "react-router-dom";
-import {BarLoader, BeatLoader} from "react-spinners";
+import { Copy, Download, LinkIcon, Trash } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { BarLoader, BeatLoader } from "react-spinners";
 
 const Ulinks = () => {
   const downloadImage = () => {
     const imageUrl = url?.qr;
-    const fileName = url?.title;
+    const fileName = url?.title || "qr-code";
 
-    // Create an anchor element
     const anchor = document.createElement("a");
     anchor.href = imageUrl;
     anchor.download = fileName;
-
-    // Append the anchor to the body
     document.body.appendChild(anchor);
-
-    // Trigger the download by simulating a click event
     anchor.click();
-
-    // Remove the anchor from the document
     document.body.removeChild(anchor);
   };
+
   const navigate = useNavigate();
-  const {user} = UrlState();
-  const {id} = useParams();
-  const {
-    loading,
-    data: url,
-    fn,
-    error,
-  } = useFetch(getUrl, {id, user_id: user?.id});
+  const { user } = UrlState();
+  const { id } = useParams();
 
-  const {
-    loading: loadingStats,
-    data: stats,
-    fn: fnStats,
-  } = useFetch(getClicksForUrl, id);
-
-  const {loading: loadingDelete, fn: fnDelete} = useFetch(deleteUrl, id);
+  const { loading, data: url, fn, error } = useFetch(getUrl, { id, user_id: user?.id });
+  const { loading: loadingStats, data: stats, fn: fnStats } = useFetch(getClicksForUrl, id);
+  const { loading: loadingDelete, fn: fnDelete } = useFetch(deleteUrl, id);
 
   useEffect(() => {
     fn();
@@ -60,10 +44,8 @@ const Ulinks = () => {
     navigate("/dashboard");
   }
 
-  let link = "";
-  if (url) {
-    link = url?.custom_url ? url?.custom_url : url.short_url;
-  }
+  const link = url?.custom_url || url?.short_url || "";
+  const shortUrl = link ? `https://delightful-sundae-5f2559.netlify.app/${link}` : "";
 
   return (
     <>
@@ -75,13 +57,17 @@ const Ulinks = () => {
           <span className="text-6xl font-extrabold hover:underline cursor-pointer">
             {url?.title}
           </span>
-          <a
-            href={`https://trimrr.in/${link}`}
-            target="_blank"
+
+          {/* Shortened URL */}
+          <div
             className="text-3xl sm:text-4xl text-blue-400 font-bold hover:underline cursor-pointer"
+            onClick={() => window.open(shortUrl, "_blank")}
+            title="Click to open short URL"
           >
-            https://trimrr.in/{link}
-          </a>
+            {shortUrl}
+          </div>
+
+          {/* Original URL */}
           <a
             href={url?.original_url}
             target="_blank"
@@ -90,15 +76,19 @@ const Ulinks = () => {
             <LinkIcon className="p-1" />
             {url?.original_url}
           </a>
+
           <span className="flex items-end font-extralight text-sm">
-            {new Date(url?.created_at).toLocaleString()}
+            {url?.created_at && new Date(url.created_at).toLocaleString()}
           </span>
+
+          {/* Action buttons */}
           <div className="flex gap-2">
             <Button
               variant="ghost"
-              onClick={() =>
-                navigator.clipboard.writeText(`https://trimrr.in/${link}`)
-              }
+              onClick={() => {
+                navigator.clipboard.writeText(shortUrl);
+                alert("Link copied to clipboard!");
+              }}
             >
               <Copy />
             </Button>
@@ -112,15 +102,13 @@ const Ulinks = () => {
                   navigate("/dashboard");
                 })
               }
-              disable={loadingDelete}
+              disabled={loadingDelete}
             >
-              {loadingDelete ? (
-                <BeatLoader size={5} color="white" />
-              ) : (
-                <Trash />
-              )}
+              {loadingDelete ? <BeatLoader size={5} color="white" /> : <Trash />}
             </Button>
           </div>
+
+          {/* QR Image */}
           <img
             src={url?.qr}
             className="w-full self-center sm:self-start ring ring-blue-500 p-1 object-contain"
@@ -128,6 +116,7 @@ const Ulinks = () => {
           />
         </div>
 
+        {/* Stats Card */}
         <Card className="sm:w-3/5">
           <CardHeader>
             <CardTitle className="text-4xl font-extrabold">Stats</CardTitle>
@@ -150,9 +139,7 @@ const Ulinks = () => {
             </CardContent>
           ) : (
             <CardContent>
-              {loadingStats === false
-                ? "No Statistics yet"
-                : "Loading Statistics.."}
+              {loadingStats === false ? "No Statistics yet" : "Loading Statistics.."}
             </CardContent>
           )}
         </Card>
@@ -162,6 +149,3 @@ const Ulinks = () => {
 };
 
 export default Ulinks;
-
-
-// Ulinks

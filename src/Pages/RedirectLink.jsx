@@ -1,58 +1,43 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { BarLoader } from "react-spinners";
-
-import { storeClicks, getLongUrl } from "../Db/ApiUrls";
-import useFetch from "../Hooks/use-fetch";
+import supabase from "../Db/supabase"; // ✅ Make sure this points to your Supabase client setup
+import { toast } from "react-toastify"; // ✅ Optional: for user-friendly messages
 
 const RedirectLink = () => {
   const { id } = useParams();
 
-  // Fetch the long/original URL from Supabase using the short/custom ID
-  const { loading, data, fn } = useFetch(getLongUrl, id);
-
-  // Trigger storing click stats after data is loaded
-  const {
-    loading: loadingStats,
-    fn: fnStats,
-  } = useFetch(storeClicks, {
-    id: data?.id,
-    originalurl: data?.original_url, // ✅ Ensure the key matches exactly
-  });
-
-  // Fetch the original URL on component mount
   useEffect(() => {
-    fn(); // Calls getLongUrl with the short/custom id
-  }, []);
+    const fetchAndRedirect = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("short_links") // 🔁 Replace with your actual Supabase table name
+          .select("original_url")
+          .eq("short_id", id)   // 🔑 short_id is the identifier in your shortened link
+          .single();            // Ensure you only get one result
 
-  // After data is loaded, store click stats and redirect
-  useEffect(() => {
-    if (!loading && data) {
-      fnStats(); // This will call storeClicks and redirect the user
-    }
-  }, [loading]);
+        if (error || !data) {
+          console.error("Redirection error:", error?.message || "No data found");
+          toast.error("Invalid or expired link.");
+          return;
+        }
 
-  // While loading data or storing clicks
-  if (loading || loadingStats) {
-    return (
-      <div className="flex flex-col items-center mt-10">
-        <BarLoader width={"100%"} color="#36d7b7" />
-        <p className="mt-4 text-lg">Redirecting...</p>
-      </div>
-    );
-  }
+        // ✅ Perform redirection
+        window.location.href = data.original_url;
+      } catch (err) {
+        console.error("Unexpected redirect error:", err);
+        toast.error("Something went wrong!");
+      }
+    };
 
-  // If no link was found for the given ID
-  if (!data) {
-    return (
-      <div className="text-center mt-10 text-red-600 font-semibold text-lg">
-        ❌ Link not found. Please check your URL.
-      </div>
-    );
-  }
+    if (id) fetchAndRedirect();
+  }, [id]);
 
-  return null;
+  return (
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <h2>Redirecting...</h2>
+      <p>If you are not redirected automatically, please check the URL.</p>
+    </div>
+  );
 };
 
 export default RedirectLink;
- 

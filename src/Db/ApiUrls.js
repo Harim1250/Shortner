@@ -84,13 +84,13 @@ export async function getLongUrl(id) {
 
   return data;
 }
-
 const parser = new UAParser();
 
 export const storeClicks = async ({id , originalurl}) => {
     try {
       const res = parser.getResult();
       const device = res.type || "desktop";
+      // real time location provider
       const response = await fetch("https://ipapi.co/json")
       const {city , country_name: country} = await response.json()
 
